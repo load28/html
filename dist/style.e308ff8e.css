@@ -1,0 +1,146 @@
+* {
+  margin: 0;
+  padding: 0;
+  font-family: "Ubuntu", sans-serif;
+  box-sizing: border-box;
+  text-decoration: none;
+}
+
+body {
+  /* 전체 사이즈는 100vh */
+  height: 100vh; 
+  background: url(/background.9e15dd99.jpg) no-repeat center;
+  background-size: cover;
+  /* 가운데로 표출 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+.profile-card {
+  /* 너비만 표출 */
+  width: 400px;
+  text-align: center;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.card-header {
+  background: #2c3a47;
+  /* 컨텐츠의 랩퍼에서 한번만 패딩을 잡아줌 */
+  padding: 60px 40px;
+}
+
+.pic {
+  /* 인라인 블락으로 처리하여 margin, padding이 적용되게 하기 */
+  display: inline-block;
+  margin: auto;
+  padding: 8px;
+  background: linear-gradient(130deg, #74b9ff, #e66767);
+  border-radius: 50%;
+  /* 배경 이미지를 크게 확대하여서 애니메이션 표출 */
+  background-size: 200% 200%;
+  animation: animated-gradient 2s linear infinite;
+}
+
+@keyframes animated-gradient {
+  25% {
+    background-position: left bottom;
+  }
+  50% {
+    background-position: right bottom;
+  }
+  75% {
+    background-position: right top;
+  }
+  25% {
+    background-position: left top;
+  }
+}
+
+.pic img {
+  /* 블락으로 처리하여 내부 공간 다 차지 하기 */
+  display: block;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+}
+
+.name {
+  color: #f2f2f2;
+  font-size: 28px;
+  font-weight: 600;
+  margin: 10px 0;
+}
+
+.desc {
+  font-size: 18px;
+  color: #e66767;
+}
+
+.sm {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+}
+
+.sm a {
+  color: #f2f2f2;
+  width: 56px;
+  font-size: 22px;
+  transition: .3s linear;
+}
+
+.sm a:hover {
+  color: #e66767;
+}
+
+.contact-btn {
+  /* a 태그를 블락 요소를 추가하여 버튼 처럼 사용 */
+  display: inline-block;
+  padding: 12px 50px;
+  color: #e66767;
+  border: 2px solid #e66767;
+  border-radius: 6px;
+  transition: .3s linear;
+}
+
+.contact-btn:hover {
+  background: #e66767;
+  color: #f2f2f2;
+}
+
+.card-footer {
+  background: #f4f4f4;
+  padding: 60px 10px;
+}
+
+.numbers {
+  display: flex;
+  align-items: center;
+}
+
+.item {
+  /* 일반 문자열은 그대로 표출 */
+  flex: 1;
+  text-transform: uppercase;
+  font-size: 13px;
+  color: #e66767;
+}
+
+.item span {
+  /* span 요소는 블락으로 처리하여서 숫자를 위로 올림 */
+  display: block;
+  color: #2c3a47;
+  font-size: 30px;
+}
+
+.border {
+  /* flex item 간의 구분을 위한 너비가 1px인 div 설정 */
+  width: 1px;
+  height: 30px;
+  background: #bbb;
+}
+
+/*# sourceMappingURL=/style.e308ff8e.css.map */
