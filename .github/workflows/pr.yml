@@ -2,7 +2,7 @@ name: Pull request
 on:
   pull_request:
     branches:
-    - 'releases/*'
+      - 'releases/*'
     types:
       - opened
       - edited
@@ -11,6 +11,7 @@ on:
 jobs:
   check-pr-vlidation:
     runs-on: ubuntu-latest
+    if: "startsWith(github.head_ref, 'releases/')"
     steps:
       - name: Check PR title
         run: |
