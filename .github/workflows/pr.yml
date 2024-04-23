@@ -1,0 +1,32 @@
+name: Pull request
+on:
+  pull_request:
+    branches:
+    - 'releases/*'
+    types:
+      - opened
+      - edited
+      - synchronize
+
+jobs:
+  check-pr-vlidation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR title
+        run: |
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          echo "PR title: $PR_TITLE"
+          if [[ ! $PR_TITLE =~ \#[[:alnum:][:punct:]]+$ ]]; then
+            echo "PR title does not meet the condition"
+            exit 1
+          fi
+        shell: bash
+
+      - name: Check PR milestone
+        run: |
+          PR_MILESTONE="${{ github.event.pull_request.milestone }}"
+          if [ -z "$PR_MILESTONE" ]; then
+            echo "PR does not have a milestone"
+            exit 1
+          fi
+        shell: bash
