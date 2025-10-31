@@ -2,18 +2,12 @@
 const API_BASE_URL = 'http://localhost:3000/api';
 const CURRENT_USER_ID = 1; // 데모용 사용자 ID
 
-// 검색 엔진 타입
-type SearchEngine = 'elasticsearch' | 'postgresql';
-
 // 상태 관리
 interface AppState {
-  searchEngine: SearchEngine;
   query: string;
   selectedTags: string[];
   dateFrom: string;
   dateTo: string;
-  sortBy: 'relevance' | 'date' | 'popularity';
-  fuzzySearch: boolean;
   currentPage: number;
   totalPages: number;
   isLoading: boolean;
@@ -21,13 +15,10 @@ interface AppState {
 }
 
 const state: AppState = {
-  searchEngine: 'elasticsearch',
   query: '',
   selectedTags: [],
   dateFrom: '',
   dateTo: '',
-  sortBy: 'relevance',
-  fuzzySearch: true,
   currentPage: 1,
   totalPages: 1,
   isLoading: false,
@@ -35,18 +26,11 @@ const state: AppState = {
 };
 
 // DOM 요소
-const searchEngineSelect = document.getElementById('searchEngine') as HTMLSelectElement;
-const fuzzySearchCheckbox = document.getElementById('fuzzySearch') as HTMLInputElement;
 const searchInput = document.getElementById('searchInput') as HTMLInputElement;
 const suggestionsEl = document.getElementById('suggestions') as HTMLElement;
-const searchStatsEl = document.getElementById('searchStats') as HTMLElement;
 const filterToggle = document.getElementById('filterToggle') as HTMLButtonElement;
-const trendingToggle = document.getElementById('trendingToggle') as HTMLButtonElement;
 const filterPanel = document.getElementById('filterPanel') as HTMLElement;
-const trendingPanel = document.getElementById('trendingPanel') as HTMLElement;
-const trendingList = document.getElementById('trendingList') as HTMLElement;
 const filterCount = document.getElementById('filterCount') as HTMLElement;
-const sortBySelect = document.getElementById('sortBy') as HTMLSelectElement;
 const popularTagsEl = document.getElementById('popularTags') as HTMLElement;
 const selectedTagsEl = document.getElementById('selectedTags') as HTMLElement;
 const dateFromInput = document.getElementById('dateFrom') as HTMLInputElement;
@@ -62,6 +46,7 @@ const emptyStateEl = document.getElementById('emptyState') as HTMLElement;
 
 /**
  * 디바운스 함수 (성능 최적화)
+ * 사용자가 타이핑을 멈춘 후 일정 시간이 지나면 함수 실행
  */
 function debounce<T extends (...args: any[]) => any>(
   func: T,
@@ -72,6 +57,25 @@ function debounce<T extends (...args: any[]) => any>(
   return function (this: any, ...args: Parameters<T>) {
     clearTimeout(timeoutId);
     timeoutId = setTimeout(() => func.apply(this, args), delay);
+  };
+}
+
+/**
+ * 쓰로틀 함수 (성능 최적화)
+ * 일정 시간 동안 함수가 한 번만 실행되도록 제한
+ */
+function throttle<T extends (...args: any[]) => any>(
+  func: T,
+  limit: number
+): (...args: Parameters<T>) => void {
+  let inThrottle: boolean;
+
+  return function (this: any, ...args: Parameters<T>) {
+    if (!inThrottle) {
+      func.apply(this, args);
+      inThrottle = true;
+      setTimeout(() => (inThrottle = false), limit);
+    }
   };
 }
 
@@ -103,7 +107,7 @@ async function fetchAPI(endpoint: string, params: Record<string, any> = {}) {
 }
 
 /**
- * 게시물 검색 (Elasticsearch 또는 PostgreSQL)
+ * 게시물 검색
  */
 async function searchPosts(loadMore: boolean = false) {
   if (state.isLoading) return;
@@ -116,13 +120,8 @@ async function searchPosts(loadMore: boolean = false) {
     resultsEl.innerHTML = '';
   }
 
-  const startTime = Date.now();
-
   try {
-    const baseEndpoint =
-      state.searchEngine === 'elasticsearch' ? '/es/search/posts' : '/search/posts';
-
-    const params: Record<string, any> = {
+    const params = {
       userId: CURRENT_USER_ID,
       query: state.query,
       tags: state.selectedTags,
@@ -132,39 +131,28 @@ async function searchPosts(loadMore: boolean = false) {
       limit: 20,
     };
 
-    // Elasticsearch 전용 파라미터
-    if (state.searchEngine === 'elasticsearch') {
-      params.sortBy = state.sortBy;
-      params.fuzzy = state.fuzzySearch;
-    }
-
-    const response = await fetchAPI(baseEndpoint, params);
+    const response = await fetchAPI('/search/posts', params);
 
     if (response.success) {
-      const { posts, total, totalPages, hasMore, searchTime, maxScore } =
-        response.data;
+      const { posts, total, totalPages, hasMore } = response.data;
 
       state.totalPages = totalPages;
       state.hasMore = hasMore;
 
-      const clientTime = Date.now() - startTime;
-
       if (posts.length === 0 && !loadMore) {
         showEmptyState(true);
         showResultsInfo(false);
-        hideSearchStats();
       } else {
         showEmptyState(false);
         displayPosts(posts, loadMore);
         updateResultsInfo(total);
-        updateSearchStats(total, searchTime || clientTime, maxScore);
       }
 
       updateLoadMoreButton();
     }
   } catch (error) {
     console.error('Search failed:', error);
-    alert('검색에 실패했습니다. 서버가 실행 중인지 확인해주세요.');
+    alert('검색에 실패했습니다. 다시 시도해주세요.');
   } finally {
     state.isLoading = false;
     showLoading(false);
@@ -182,21 +170,14 @@ function displayPosts(posts: any[], append: boolean = false) {
       <div class="post-header">
         <img src="${post.user_avatar || '/default-avatar.jpg'}" alt="${
         post.user_name
-      }" class="post-avatar" onerror="this.src='/default-avatar.jpg'" />
+      }" class="post-avatar" />
         <div class="post-author-info">
           <div class="post-author-name">${post.user_name}</div>
           <div class="post-date">${formatDate(post.created_at)}</div>
         </div>
-        ${
-          post._score
-            ? `<div class="post-score" title="관련도 점수">⭐ ${post._score.toFixed(
-                2
-              )}</div>`
-            : ''
-        }
       </div>
-      <h3 class="post-title">${highlightText(post.title || '제목 없음')}</h3>
-      <p class="post-content">${highlightText(truncateText(post.content, 200))}</p>
+      <h3 class="post-title">${post.title || '제목 없음'}</h3>
+      <p class="post-content">${truncateText(post.content, 200)}</p>
       ${
         post.tags && post.tags.length > 0
           ? `<div class="post-tags">
@@ -221,25 +202,11 @@ function displayPosts(posts: any[], append: boolean = false) {
 }
 
 /**
- * 하이라이팅 처리 (Elasticsearch 결과)
- */
-function highlightText(text: string): string {
-  // 이미 <mark> 태그가 있으면 그대로 사용
-  if (text && text.includes('<mark>')) {
-    return text;
-  }
-  return text || '';
-}
-
-/**
  * 인기 태그 로드
  */
 async function loadPopularTags() {
   try {
-    const endpoint =
-      state.searchEngine === 'elasticsearch' ? '/es/search/tags' : '/search/tags';
-
-    const response = await fetchAPI(endpoint, {
+    const response = await fetchAPI('/search/tags', {
       userId: CURRENT_USER_ID,
       limit: 10,
     });
@@ -267,8 +234,6 @@ function displayPopularTags(tags: string[]) {
       toggleTag(tag);
     });
   });
-
-  updateSelectedTags();
 }
 
 /**
@@ -292,28 +257,28 @@ function toggleTag(tag: string) {
  */
 function updateSelectedTags() {
   if (state.selectedTags.length === 0) {
-    selectedTagsEl.innerHTML =
-      '<p style="color: #999;">선택된 태그가 없습니다</p>';
-  } else {
-    selectedTagsEl.innerHTML = state.selectedTags
-      .map(
-        (tag) => `
-      <div class="selected-tag">
-        <span>#${tag}</span>
-        <span class="remove-tag" data-tag="${tag}">✕</span>
-      </div>
-    `
-      )
-      .join('');
-
-    // 태그 제거 이벤트
-    selectedTagsEl.querySelectorAll('.remove-tag').forEach((removeEl) => {
-      removeEl.addEventListener('click', () => {
-        const tag = removeEl.getAttribute('data-tag')!;
-        toggleTag(tag);
-      });
-    });
+    selectedTagsEl.innerHTML = '<p style="color: #999;">선택된 태그가 없습니다</p>';
+    return;
   }
+
+  selectedTagsEl.innerHTML = state.selectedTags
+    .map(
+      (tag) => `
+    <div class="selected-tag">
+      <span>#${tag}</span>
+      <span class="remove-tag" data-tag="${tag}">✕</span>
+    </div>
+  `
+    )
+    .join('');
+
+  // 태그 제거 이벤트
+  selectedTagsEl.querySelectorAll('.remove-tag').forEach((removeEl) => {
+    removeEl.addEventListener('click', () => {
+      const tag = removeEl.getAttribute('data-tag')!;
+      toggleTag(tag);
+    });
+  });
 
   // 인기 태그에도 선택 상태 반영
   popularTagsEl.querySelectorAll('.tag').forEach((tagEl) => {
@@ -327,19 +292,18 @@ function updateSelectedTags() {
 }
 
 /**
- * 자동완성 제안 표시 (Elasticsearch)
+ * 자동완성 제안 표시 (디바운싱 적용)
  */
 const showSuggestions = debounce(async (query: string) => {
-  if (query.length < 2 || state.searchEngine !== 'elasticsearch') {
+  if (query.length < 2) {
     suggestionsEl.classList.add('hidden');
     return;
   }
 
   try {
-    const response = await fetchAPI('/es/search/autocomplete', {
+    const response = await fetchAPI('/search/suggestions', {
       userId: CURRENT_USER_ID,
       query,
-      limit: 5,
     });
 
     if (response.success && response.data.length > 0) {
@@ -367,69 +331,6 @@ const showSuggestions = debounce(async (query: string) => {
     console.error('Failed to get suggestions:', error);
   }
 }, 300);
-
-/**
- * 인기 검색어 로드 (Elasticsearch)
- */
-async function loadTrendingSearches() {
-  if (state.searchEngine !== 'elasticsearch') {
-    trendingList.innerHTML = '<p>Elasticsearch 모드에서만 사용 가능합니다</p>';
-    return;
-  }
-
-  try {
-    const response = await fetchAPI('/es/search/trending', { limit: 10 });
-
-    if (response.success && response.data.length > 0) {
-      trendingList.innerHTML = response.data
-        .map(
-          (item: any) => `
-        <div class="trending-item" data-query="${item.query}">
-          <span class="trending-query">${item.query}</span>
-          <span class="trending-count">${item.count}회</span>
-        </div>
-      `
-        )
-        .join('');
-
-      // 클릭 이벤트
-      trendingList.querySelectorAll('.trending-item').forEach((item) => {
-        item.addEventListener('click', () => {
-          const query = item.getAttribute('data-query')!;
-          searchInput.value = query;
-          state.query = query;
-          trendingPanel.classList.add('hidden');
-          searchPosts();
-        });
-      });
-    } else {
-      trendingList.innerHTML = '<p>최근 검색 기록이 없습니다</p>';
-    }
-  } catch (error) {
-    console.error('Failed to load trending searches:', error);
-    trendingList.innerHTML = '<p>인기 검색어를 불러올 수 없습니다</p>';
-  }
-}
-
-/**
- * 검색 통계 업데이트
- */
-function updateSearchStats(total: number, searchTime: number, maxScore?: number) {
-  let statsHTML = `검색 시간: <strong>${searchTime}ms</strong>`;
-
-  if (maxScore !== undefined) {
-    statsHTML += ` | 최고 관련도: <strong>${maxScore.toFixed(2)}</strong>`;
-  }
-
-  statsHTML += ` | 엔진: <strong>${state.searchEngine === 'elasticsearch' ? 'Elasticsearch' : 'PostgreSQL'}</strong>`;
-
-  searchStatsEl.innerHTML = statsHTML;
-  searchStatsEl.classList.remove('hidden');
-}
-
-function hideSearchStats() {
-  searchStatsEl.classList.add('hidden');
-}
 
 /**
  * 필터 개수 업데이트
@@ -471,15 +372,27 @@ function updateLoadMoreButton() {
  * UI 표시/숨김 함수들
  */
 function showLoading(show: boolean) {
-  loadingEl.classList.toggle('hidden', !show);
+  if (show) {
+    loadingEl.classList.remove('hidden');
+  } else {
+    loadingEl.classList.add('hidden');
+  }
 }
 
 function showEmptyState(show: boolean) {
-  emptyStateEl.classList.toggle('hidden', !show);
+  if (show) {
+    emptyStateEl.classList.remove('hidden');
+  } else {
+    emptyStateEl.classList.add('hidden');
+  }
 }
 
 function showResultsInfo(show: boolean) {
-  resultsInfoEl.classList.toggle('hidden', !show);
+  if (show) {
+    resultsInfoEl.classList.remove('hidden');
+  } else {
+    resultsInfoEl.classList.add('hidden');
+  }
 }
 
 /**
@@ -499,7 +412,7 @@ function formatDate(dateString: string): string {
 }
 
 function truncateText(text: string, maxLength: number): string {
-  if (!text || text.length <= maxLength) return text || '';
+  if (text.length <= maxLength) return text;
   return text.substring(0, maxLength) + '...';
 }
 
@@ -507,53 +420,20 @@ function truncateText(text: string, maxLength: number): string {
  * 이벤트 리스너 설정
  */
 function setupEventListeners() {
-  // 검색 엔진 변경
-  searchEngineSelect.addEventListener('change', () => {
-    state.searchEngine = searchEngineSelect.value as SearchEngine;
-    loadPopularTags();
-    searchPosts();
-  });
-
-  // 퍼지 검색 토글
-  fuzzySearchCheckbox.addEventListener('change', () => {
-    state.fuzzySearch = fuzzySearchCheckbox.checked;
-    if (state.query) {
-      searchPosts();
-    }
-  });
-
   // 검색 입력 (디바운싱 적용)
   const debouncedSearch = debounce(() => {
     state.query = searchInput.value;
     searchPosts();
   }, 500);
 
-  searchInput.addEventListener('input', () => {
+  searchInput.addEventListener('input', (e) => {
     showSuggestions(searchInput.value);
     debouncedSearch();
-  });
-
-  // 정렬 변경
-  sortBySelect.addEventListener('change', () => {
-    state.sortBy = sortBySelect.value as any;
-    if (state.query || state.selectedTags.length > 0) {
-      searchPosts();
-    }
   });
 
   // 필터 토글
   filterToggle.addEventListener('click', () => {
     filterPanel.classList.toggle('hidden');
-    trendingPanel.classList.add('hidden');
-  });
-
-  // 인기 검색어 토글
-  trendingToggle.addEventListener('click', () => {
-    trendingPanel.classList.toggle('hidden');
-    filterPanel.classList.add('hidden');
-    if (!trendingPanel.classList.contains('hidden')) {
-      loadTrendingSearches();
-    }
   });
 
   // 필터 적용
@@ -582,10 +462,9 @@ function setupEventListeners() {
     searchPosts(true);
   });
 
-  // 외부 클릭 시 패널 숨김
+  // 외부 클릭 시 자동완성 숨김
   document.addEventListener('click', (e) => {
-    const target = e.target as Node;
-    if (!searchInput.contains(target)) {
+    if (!searchInput.contains(e.target as Node)) {
       suggestionsEl.classList.add('hidden');
     }
   });
@@ -595,13 +474,9 @@ function setupEventListeners() {
  * 앱 초기화
  */
 async function init() {
-  console.log('🚀 Initializing Friend Posts Search...');
-
   setupEventListeners();
   await loadPopularTags();
   searchPosts(); // 초기 검색 (전체 친구 게시물)
-
-  console.log('✓ App initialized with', state.searchEngine, 'search engine');
 }
 
 // 앱 시작

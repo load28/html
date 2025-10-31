@@ -16,12 +16,29 @@
 
       <!-- 검색 영역 -->
       <div class="search-section">
+        <div class="search-controls">
+          <div class="search-engine-select">
+            <label for="searchEngine">검색 엔진:</label>
+            <select id="searchEngine" class="select-input">
+              <option value="elasticsearch">Elasticsearch (고급)</option>
+              <option value="postgresql">PostgreSQL</option>
+            </select>
+          </div>
+
+          <div class="fuzzy-search-toggle">
+            <label>
+              <input type="checkbox" id="fuzzySearch" checked />
+              퍼지 검색 (오타 허용)
+            </label>
+          </div>
+        </div>
+
         <div class="search-box">
           <input
             type="text"
             id="searchInput"
             class="search-input"
-            placeholder="게시물 검색..."
+            placeholder="게시물 검색... (Elasticsearch 사용 시 한국어 형태소 분석)"
             autocomplete="off"
           />
           <div class="search-icon">🔍</div>
@@ -30,14 +47,31 @@
         <!-- 자동완성 제안 -->
         <div id="suggestions" class="suggestions hidden"></div>
 
+        <!-- 검색 통계 -->
+        <div id="searchStats" class="search-stats hidden"></div>
+
         <!-- 필터 버튼 -->
-        <button id="filterToggle" class="filter-toggle">
-          필터 <span id="filterCount"></span>
-        </button>
+        <div class="action-buttons">
+          <button id="filterToggle" class="filter-toggle">
+            필터 <span id="filterCount"></span>
+          </button>
+          <button id="trendingToggle" class="trending-toggle">
+            인기 검색어
+          </button>
+        </div>
       </div>
 
       <!-- 필터 패널 -->
       <div id="filterPanel" class="filter-panel hidden">
+        <div class="filter-group">
+          <label for="sortBy">정렬 기준:</label>
+          <select id="sortBy" class="filter-input">
+            <option value="relevance">관련도 (Elasticsearch)</option>
+            <option value="date">최신순</option>
+            <option value="popularity">인기순</option>
+          </select>
+        </div>
+
         <div class="filter-group">
           <label for="dateFrom">시작 날짜:</label>
           <input type="date" id="dateFrom" class="filter-input" />
@@ -62,6 +96,12 @@
           <button id="applyFilters" class="btn btn-primary">적용</button>
           <button id="clearFilters" class="btn btn-secondary">초기화</button>
         </div>
+      </div>
+
+      <!-- 인기 검색어 패널 -->
+      <div id="trendingPanel" class="trending-panel hidden">
+        <h3>인기 검색어 (최근 7일)</h3>
+        <div id="trendingList" class="trending-list"></div>
       </div>
 
       <!-- 로딩 인디케이터 -->

@@ -10,7 +10,8 @@
     "build:server": "tsc -p tsconfig.server.json",
     "start:server": "node dist/server/index.js",
     "dev:client": "parcel serve src/friend-search/index.html",
-    "build:client": "parcel build src/friend-search/index.html"
+    "build:client": "parcel build src/friend-search/index.html",
+    "es:setup": "ts-node src/server/scripts/setupElasticsearch.ts"
   },
   "devDependencies": {
     "@types/cors": "^2.8.12",
@@ -23,6 +24,7 @@
     "typescript": "^4.0.3"
   },
   "dependencies": {
+    "@elastic/elasticsearch": "^8.10.0",
     "cors": "^2.8.5",
     "express": "^4.18.1",
     "node-cache": "^5.1.2",
