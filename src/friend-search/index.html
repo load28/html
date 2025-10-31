@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>친구 게시물 검색</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <!-- 헤더 -->
+      <header class="header">
+        <h1>친구 게시물 검색</h1>
+        <p class="subtitle">친구들의 게시물을 빠르게 찾아보세요</p>
+      </header>
+
+      <!-- 검색 영역 -->
+      <div class="search-section">
+        <div class="search-controls">
+          <div class="search-engine-select">
+            <label for="searchEngine">검색 엔진:</label>
+            <select id="searchEngine" class="select-input">
+              <option value="elasticsearch">Elasticsearch (고급)</option>
+              <option value="postgresql">PostgreSQL</option>
+            </select>
+          </div>
+
+          <div class="fuzzy-search-toggle">
+            <label>
+              <input type="checkbox" id="fuzzySearch" checked />
+              퍼지 검색 (오타 허용)
+            </label>
+          </div>
+        </div>
+
+        <div class="search-box">
+          <input
+            type="text"
+            id="searchInput"
+            class="search-input"
+            placeholder="게시물 검색... (Elasticsearch 사용 시 한국어 형태소 분석)"
+            autocomplete="off"
+          />
+          <div class="search-icon">🔍</div>
+        </div>
+
+        <!-- 자동완성 제안 -->
+        <div id="suggestions" class="suggestions hidden"></div>
+
+        <!-- 검색 통계 -->
+        <div id="searchStats" class="search-stats hidden"></div>
+
+        <!-- 필터 버튼 -->
+        <div class="action-buttons">
+          <button id="filterToggle" class="filter-toggle">
+            필터 <span id="filterCount"></span>
+          </button>
+          <button id="trendingToggle" class="trending-toggle">
+            인기 검색어
+          </button>
+        </div>
+      </div>
+
+      <!-- 필터 패널 -->
+      <div id="filterPanel" class="filter-panel hidden">
+        <div class="filter-group">
+          <label for="sortBy">정렬 기준:</label>
+          <select id="sortBy" class="filter-input">
+            <option value="relevance">관련도 (Elasticsearch)</option>
+            <option value="date">최신순</option>
+            <option value="popularity">인기순</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="dateFrom">시작 날짜:</label>
+          <input type="date" id="dateFrom" class="filter-input" />
+        </div>
+
+        <div class="filter-group">
+          <label for="dateTo">종료 날짜:</label>
+          <input type="date" id="dateTo" class="filter-input" />
+        </div>
+
+        <div class="filter-group">
+          <label>인기 태그:</label>
+          <div id="popularTags" class="tags-container"></div>
+        </div>
+
+        <div class="filter-group">
+          <label>선택된 태그:</label>
+          <div id="selectedTags" class="selected-tags"></div>
+        </div>
+
+        <div class="filter-actions">
+          <button id="applyFilters" class="btn btn-primary">적용</button>
+          <button id="clearFilters" class="btn btn-secondary">초기화</button>
+        </div>
+      </div>
+
+      <!-- 인기 검색어 패널 -->
+      <div id="trendingPanel" class="trending-panel hidden">
+        <h3>인기 검색어 (최근 7일)</h3>
+        <div id="trendingList" class="trending-list"></div>
+      </div>
+
+      <!-- 로딩 인디케이터 -->
+      <div id="loading" class="loading hidden">
+        <div class="spinner"></div>
+        <p>검색 중...</p>
+      </div>
+
+      <!-- 검색 결과 -->
+      <div class="results-section">
+        <div id="resultsInfo" class="results-info hidden"></div>
+        <div id="results" class="results"></div>
+        <div id="loadMore" class="load-more hidden">
+          <button id="loadMoreBtn" class="btn btn-primary">더 보기</button>
+        </div>
+      </div>
+
+      <!-- 빈 상태 -->
+      <div id="emptyState" class="empty-state hidden">
+        <p>검색 결과가 없습니다</p>
+      </div>
+    </div>
+
+    <script type="module" src="./app.ts"></script>
+  </body>
+</html>
