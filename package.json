@@ -5,12 +5,28 @@
   "repository": "https://github.com/load28/html",
   "author": "seo minyoung <tjalsdud89@naver.com>",
   "license": "MIT",
+  "scripts": {
+    "dev:server": "ts-node-dev --respawn --transpile-only src/server/index.ts",
+    "build:server": "tsc -p tsconfig.server.json",
+    "start:server": "node dist/server/index.js",
+    "dev:client": "parcel serve src/friend-search/index.html",
+    "build:client": "parcel build src/friend-search/index.html"
+  },
   "devDependencies": {
+    "@types/cors": "^2.8.12",
+    "@types/express": "^4.17.13",
+    "@types/node": "^18.0.0",
     "cssnano": "^4.1.10",
+    "parcel": "^2.6.2",
     "sass": "^1.27.0",
+    "ts-node-dev": "^2.0.0",
     "typescript": "^4.0.3"
   },
   "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.1",
+    "node-cache": "^5.1.2",
+    "pg": "^8.8.0",
     "prettier": "^2.1.2"
   }
 }
