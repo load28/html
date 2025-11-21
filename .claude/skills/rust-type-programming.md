@@ -65,6 +65,16 @@
 - 타입 안전한 DSL 설계
 - compile_error! 활용
 
+### 7. 헥사고날 아키텍처
+[가이드 문서](.claude/skills/rust-type-programming/guides/hexagonal-architecture.md)
+
+핵심 주제:
+- Ports and Adapters 패턴
+- 도메인 중심 설계
+- 트레이트 기반 의존성 역전
+- 레이어별 책임 분리
+- Cargo 워크스페이스 구조
+
 ## 코드 리뷰 체크리스트
 
 코드 작성 시 다음을 확인하세요:
