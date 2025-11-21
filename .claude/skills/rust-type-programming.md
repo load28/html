@@ -56,16 +56,7 @@
 - Interior Mutability 패턴
 - Arc, Rc, RefCell 활용
 
-### 6. 매크로 & 코드 생성
-[가이드 문서](.claude/skills/rust-type-programming/guides/macros-codegen.md)
-
-핵심 주제:
-- Derive 매크로 활용
-- Procedural 매크로 패턴
-- 타입 안전한 DSL 설계
-- compile_error! 활용
-
-### 7. 헥사고날 아키텍처
+### 6. 헥사고날 아키텍처
 [가이드 문서](.claude/skills/rust-type-programming/guides/hexagonal-architecture.md)
 
 핵심 주제:
@@ -75,49 +66,12 @@
 - 레이어별 책임 분리
 - Cargo 워크스페이스 구조
 
-## 코드 리뷰 체크리스트
+### 7. 코딩 컨벤션
+[가이드 문서](.claude/skills/rust-type-programming/guides/conventions.md)
 
-코드 작성 시 다음을 확인하세요:
-
-- [ ] 모든 공개 함수에 명시적 타입 선언
-- [ ] unwrap() 대신 적절한 에러 핸들링
-- [ ] Newtype으로 도메인 타입 래핑
-- [ ] 가변 참조 최소화
-- [ ] 트레이트 바운드 명시
-- [ ] 라이프타임 파라미터 문서화
-- [ ] panic 발생 가능성 문서화
-- [ ] 타입 불변조건 주석 작성
-
-## 금지 패턴
-
-다음 패턴은 엔터프라이즈 코드에서 피해야 합니다:
-
-```rust
-// ❌ 타입 숨김
-fn process(data: &str) -> String
-
-// ✅ 명시적 타입
-fn process(data: UserId) -> Result<UserProfile, ProcessError>
-
-// ❌ unwrap 남용
-let value = result.unwrap();
-
-// ✅ 명시적 에러 처리
-let value = result.map_err(|e| ProcessError::from(e))?;
-
-// ❌ 프리미티브 타입 직접 사용
-fn transfer(amount: f64, account: String)
-
-// ✅ Newtype 사용
-fn transfer(amount: Money, account: AccountId) -> Result<Receipt, TransferError>
-```
-
-## 적용 방법
-
-이 가이드를 코드에 적용할 때:
-
-1. 먼저 도메인 타입 정의부터 시작
-2. 에러 타입을 명시적으로 설계
-3. 공개 API의 타입 시그니처 먼저 작성
-4. 구현은 타입이 강제하는 대로
-5. 컴파일러가 불가능한 상태를 거부하도록
+핵심 주제:
+- 타입 선언 규칙
+- 에러 처리 규칙
+- 불변성 규칙
+- 문서화 규칙
+- 네이밍 및 모듈 구조
